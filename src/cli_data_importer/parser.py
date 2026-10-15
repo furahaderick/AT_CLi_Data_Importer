@@ -1,57 +1,68 @@
 import csv
 from pathlib import Path
 
+from cli_data_importer.exceptions import FileFormatError
 from cli_data_importer.models import User
 
 
 REQUIRED_HEADERS = {"id", "name", "email"}
 
 
-def parse_csv(file_path: str | Path) -> list[User]:
-    """Parse a CSV file into User records.
+def parse_users_from_csv_file(file_path: str | Path) -> list[User]:
+    """Parse a CSV file and return its records as User objects.
 
     Raises:
         FileNotFoundError: If the input file does not exist.
-        ValueError: If the CSV headers or row structure are invalid.
-        csv.Error: If the CSV reader encounters a parsing error.
-        ValueError: Also propagates field validation errors from User.
+        PermissionError: If the file cannot be accessed due to permissions.
+        FileFormatError: If the CSV structure is invalid.
+        ValueError: If a field value fails User validation.
     """
-    with open(file_path, mode="r", encoding="utf-8-sig", newline="") as csv_file:
-        reader = csv.DictReader(csv_file)
+    users: list[User] = []
 
-        headers = reader.fieldnames
-        if headers is None:
-            raise ValueError("CSV file is empty or missing a header row.")
+    try:
+        with open(file_path, mode="r", newline="", encoding="utf-8-sig") as csv_file:
+            reader = csv.reader(csv_file, strict=True)
 
-        if len(headers) != len(set(headers)):
-            raise ValueError("CSV contains duplicate headers.")
-
-        missing_headers = REQUIRED_HEADERS - set(headers)
-        if missing_headers:
-            missing = ", ".join(sorted(missing_headers))
-            raise ValueError(f"CSV is missing required headers: {missing}")
-
-        users = []
-
-        for row_number, row in enumerate(reader, start=2):
-            # DictReader stores extra fields under the None key.
-            if None in row:
-                raise ValueError(f"Row {row_number} contains extra fields.")
-
-            # A missing value is represented by None.
-            missing_fields = [header for header in headers if row[header] is None]
-            if missing_fields:
-                raise ValueError(
-                    f"Row {row_number} is missing values for: "
-                    f"{', '.join(missing_fields)}."
+            try:
+                headers = next(reader)
+            except StopIteration:
+                raise FileFormatError(
+                    "CSV file is empty; expected headers: id, name, email."
                 )
 
-            users.append(
-                User(
-                    id=row["id"],
-                    name=row["name"],
-                    email=row["email"],
-                )
-            )
+            if len(headers) != len(set(headers)):
+                raise FileFormatError("CSV contains duplicate headers.")
 
-        return users
+            missing_headers = REQUIRED_HEADERS - set(headers)
+            if missing_headers:
+                missing = ", ".join(sorted(missing_headers))
+                raise FileFormatError(f"CSV is missing required header(s): {missing}.")
+
+            for row in reader:
+                row_number = reader.line_num
+
+                if len(row) != len(headers):
+                    raise FileFormatError(
+                        f"Malformed CSV row ending at line {row_number}: "
+                        f"expected {len(headers)} fields, got {len(row)}."
+                    )
+
+                record = dict(zip(headers, row))
+
+                try:
+                    user = User(
+                        id=record["id"],
+                        name=record["name"],
+                        email=record["email"],
+                    )
+                except ValueError as exc:
+                    raise ValueError(
+                        f"Invalid user data on CSV row {row_number}: {exc}"
+                    ) from exc
+
+                users.append(user)
+
+    except csv.Error as exc:
+        raise FileFormatError(f"Invalid CSV format: {exc}") from exc
+
+    return users
