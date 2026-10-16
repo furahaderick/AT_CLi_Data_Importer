@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 import re
+from dataclasses import dataclass
 
 EMAIL_REGEX = re.compile(r"^[^@]+@[^@]+\.[^@]+$")
 
@@ -9,8 +9,6 @@ class User:
     id: str
     name: str
     email: str
-
-    # TODO: Check for id and email uniqueness at the repository level
 
     def __post_init__(self):
         if not self.id or not self.id.strip():
