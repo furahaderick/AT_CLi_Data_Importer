@@ -3,7 +3,6 @@ from collections.abc import Iterable, Mapping
 from cli_data_importer.exceptions import DuplicateUserError, ImporterError
 from cli_data_importer.models import EMAIL_REGEX, User
 
-
 REQUIRED_FIELDS = ("id", "name", "email")
 
 
@@ -24,7 +23,7 @@ def validate_users(
         missing = [field for field in REQUIRED_FIELDS if field not in record]
         if missing:
             raise ImporterError(
-                f"Record {row_number}: missing field(s): " f"{', '.join(missing)}."
+                f"Record {row_number}: missing field(s): {', '.join(missing)}."
             )
 
         values: dict[str, str] = {}

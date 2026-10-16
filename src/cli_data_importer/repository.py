@@ -1,8 +1,8 @@
 import json
 import os
 import tempfile
-from pathlib import Path
 from collections.abc import Iterable
+from pathlib import Path
 
 from cli_data_importer.exceptions import DuplicateUserError, ImporterError
 from cli_data_importer.models import User
@@ -43,8 +43,7 @@ class JsonUserRepository:
         for index, record in enumerate(data):
             if not isinstance(record, dict):
                 raise ImporterError(
-                    f"Invalid database record at index {index}: "
-                    "expected a JSON object."
+                    f"Invalid database record at index {index}: expected a JSON object."
                 )
 
             if not required_fields.issubset(record):

@@ -4,10 +4,10 @@ import json
 
 import pytest
 
+import cli_data_importer.repository as repository_module
 from cli_data_importer.exceptions import DuplicateUserError, ImporterError
 from cli_data_importer.models import User
 from cli_data_importer.repository import JsonUserRepository
-import cli_data_importer.repository as repository_module
 
 
 @pytest.fixture

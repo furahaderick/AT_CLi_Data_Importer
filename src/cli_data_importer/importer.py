@@ -73,7 +73,7 @@ def import_users(
 
     if duplicate_count:
         logger.warning(
-            "Import rejected: %d incoming record(s) conflict " "with existing user IDs",
+            "Import rejected: %d incoming record(s) conflict with existing user IDs",
             duplicate_count,
         )
         raise DuplicateUserError(
