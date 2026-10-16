@@ -1,26 +1,30 @@
 import csv
 from pathlib import Path
 
-from cli_data_importer.exceptions import FileFormatError
-from cli_data_importer.models import User
-
+from cli_data_importer.exceptions import FileFormatError, ImporterError
 
 REQUIRED_HEADERS = {"id", "name", "email"}
 
 
-def parse_users_from_csv_file(file_path: str | Path) -> list[User]:
-    """Parse a CSV file and return its records as User objects.
+def parse_users_from_csv_file(
+    file_path: str | Path,
+) -> list[dict[str, str]]:
+    """Parse a CSV file and return its records as dictionaries.
 
     Raises:
         FileNotFoundError: If the input file does not exist.
         PermissionError: If the file cannot be accessed due to permissions.
         FileFormatError: If the CSV structure is invalid.
-        ValueError: If a field value fails User validation.
     """
-    users: list[User] = []
+    records: list[dict[str, str]] = []
 
     try:
-        with open(file_path, mode="r", newline="", encoding="utf-8-sig") as csv_file:
+        with open(
+            file_path,
+            mode="r",
+            newline="",
+            encoding="utf-8-sig",
+        ) as csv_file:
             reader = csv.reader(csv_file, strict=True)
 
             try:
@@ -47,22 +51,14 @@ def parse_users_from_csv_file(file_path: str | Path) -> list[User]:
                         f"expected {len(headers)} fields, got {len(row)}."
                     )
 
-                record = dict(zip(headers, row))
-
-                try:
-                    user = User(
-                        id=record["id"],
-                        name=record["name"],
-                        email=record["email"],
-                    )
-                except ValueError as exc:
-                    raise ValueError(
-                        f"Invalid user data on CSV row {row_number}: {exc}"
-                    ) from exc
-
-                users.append(user)
+                records.append(dict(zip(headers, row)))
 
     except csv.Error as exc:
         raise FileFormatError(f"Invalid CSV format: {exc}") from exc
 
-    return users
+    except OSError as exc:
+        raise ImporterError(
+            f"Could not read input CSV file '{file_path}': {exc}"
+        ) from exc
+
+    return records
