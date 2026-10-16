@@ -13,6 +13,9 @@ dependencies = [
 [tool.poetry]
 packages = [{include = "cli_data_importer", from = "src"}]
 
+[tool.coverage.run]
+branch = true
+
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
@@ -21,5 +24,6 @@ build-backend = "poetry.core.masonry.api"
 dev = [
     "pytest (>=9.1.1,<10.0.0)",
     "pre-commit (>=4.7.0,<5.0.0)",
-    "coverage (>=7.16.2,<8.0.0)"
+    "coverage (>=7.16.2,<8.0.0)",
+    "pytest-mock (>=3.16.0,<4.0.0)"
 ]
